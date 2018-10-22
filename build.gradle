@@ -1,0 +1,130 @@
+buildscript {
+    ext {
+        springBootVersion = '1.5.6.RELEASE'
+        springGradleVersion = "1.0.3.RELEASE"
+        moduleVersion = project.hasProperty('moduleVersion') ? project.getProperty('moduleVersion') : '0.0.1-SNAPSHOT'
+        uploaderUser = project.hasProperty('uploaderUser') ? project.getProperty('uploaderUser') : 'uploader'
+        uploaderPassword = project.hasProperty('uploaderPassword') ? project.getProperty('uploaderPassword') : 'Set me with -P'
+    }
+
+    repositories {
+        maven {
+            credentials {
+                username "downloader"
+                password "downloader"
+            }
+            url "https://merrillcorp.jfrog.io/merrillcorp/ds1"
+        }
+        maven {
+            url "https://repo.spring.io/libs-milestone"
+        }
+        mavenLocal()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath "io.spring.gradle:dependency-management-plugin:${springGradleVersion}"
+    }
+}
+
+apply plugin: 'groovy'
+apply plugin: 'maven-publish'
+apply plugin: 'jacoco'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    maven {
+        credentials {
+            username "downloader"
+            password "downloader"
+        }
+        url "https://merrillcorp.jfrog.io/merrillcorp/ds1"
+    }
+    mavenLocal()
+}
+
+jar {
+    baseName = 'javelin-common-acc-test'
+    version = "${moduleVersion}"
+}
+
+task sourceJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId 'com.mrll.javelin'
+            artifactId 'javelin-common-acc-test'
+            version "${moduleVersion}"
+
+            from components.java
+
+            artifact sourceJar { classifier "sources" }
+
+        }
+    }
+
+    repositories {
+        mavenLocal()
+        maven {
+            url "https://merrillcorp.jfrog.io/merrillcorp/javelin-libs"
+            // Jenkins provides these as -P Gradle parameters.
+            credentials {
+                username = "downloader"
+                password = "downloader"
+            }
+        }
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    compile 'org.codehaus.groovy:groovy-all:2.4.12'
+    compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+    compile 'org.apache.httpcomponents:httpclient:4.5.3'
+    compile 'org.apache.httpcomponents:httpmime:4.5.3'
+    compile 'org.springframework:spring-beans:4.3.11.RELEASE'
+    compile 'org.yaml:snakeyaml:1.17'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
+    compile 'junit:junit:4.12'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
+    compile 'aspectj:aspectjweaver:1.5.4'
+
+    compile "org.springframework.cloud:spring-cloud-spring-service-connector:1.2.5.RELEASE"
+    compile "org.springframework.cloud:spring-cloud-cloudfoundry-connector:1.2.5.RELEASE"
+    compile 'org.cloudfoundry:cloudfoundry-client-reactor:3.3.0.RELEASE'
+    compile 'org.cloudfoundry:cloudfoundry-operations:3.3.0.RELEASE'
+    compile 'io.projectreactor:reactor-core:3.1.2.RELEASE'
+    compile 'io.projectreactor.ipc:reactor-netty:0.7.2.RELEASE'
+    compile 'org.codehaus.groovy:groovy-all:2.4.12'
+    compile 'com.rabbitmq:amqp-client:5.1.2'
+    compile 'org.mongodb:mongodb-driver:3.6.3'
+    compile 'org.spockframework:spock-core:1.1-groovy-2.4'
+
+    testCompile "org.apache.qpid:qpid-broker-core:7.0.3"
+    testCompile "org.apache.qpid:qpid-broker-plugins-amqp-0-8-protocol:7.0.3"
+    testCompile "org.apache.qpid:qpid-broker-plugins-memory-store:7.0.3"
+
+    testCompile 'cglib:cglib-nodep:3.2.4'
+    testCompile 'org.objenesis:objenesis:2.6'
+}
+
+sourceSets {
+    test {
+        groovy.srcDir file('src/test/groovy')
+        resources.srcDir file('src/test/resources')
+        compileClasspath += sourceSets.test.compileClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
+}
